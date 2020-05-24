@@ -118,14 +118,17 @@ float DS18B20_GetTempTNumber(uint8_t num){
 
 //private funct
 float DS_get_temp(struct T* ts){
-if (!(mgos_onewire_reset(ts->onewire))) return -999;
+if (!(mgos_onewire_reset(ts->onewire))) return -999; 
   mgos_onewire_write(ts->onewire,CMD_CONVERT_T);
-  mgos_msleep(7500);
+  mgos_msleep(100);
 mgos_onewire_reset(ts->onewire);
+mgos_msleep(1000);
 if(debug) LOG(LL_INFO,("DS_get_temp rom addr> %x:%x:%x:%x:%x:%x:%x:%x",ts->device_address[0],ts->device_address[1],ts->device_address[2],ts->device_address[3],ts->device_address[4],ts->device_address[5],ts->device_address[6],ts->device_address[7]));
 mgos_onewire_select(ts->onewire,ts->device_address);
 uint8_t data[DATA_SCRATCHPAD_SIZE];
+mgos_msleep(100);
 mgos_onewire_write(ts->onewire,CMD_READ_SCRATCHPAD);
+mgos_msleep(100);
 for(uint8_t s=0; s<DATA_SCRATCHPAD_SIZE; s++){  //read all scratchpad
     data[s]=mgos_onewire_read(ts->onewire);
     if(debug) LOG(LL_INFO,("reading scratchpad data %i data=%x",s,data[s]));
