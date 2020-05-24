@@ -31,14 +31,14 @@ const bool debug=true;
 //private funct
 float DS_get_temp(struct T* ts);
 void createDevField();
-uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow);
+uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow);
 char *byteToHexF(uint8_t byteOfAddress);
 
 
 //private funct
 void createDevField(){ //primary creation of array of sensors, run only once, next run will redefine array
   if(debug) LOG(LL_INFO,("createDevField entering.."));
-  tow=(struct T**)malloc(sizeof(struct T*));
+  // tow=(struct T**)malloc(sizeof(struct T*));
  /*
   if(countDevs!=0) {  //if array already exist (redefinition)
   if(debug) LOG(LL_INFO,("createDevField freeing allocation.."));
@@ -56,9 +56,11 @@ void createDevField(){ //primary creation of array of sensors, run only once, ne
 //private funct, "constructor" of struct T
 uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow){ //add memory for one sensor to array of sensors, returns last access field item index
   if(debug) LOG(LL_INFO,("addToDevField started.."));
-  *tow=(struct T*)realloc(tow,(sizeof(*tow)+sizeof(struct T*)));
+  //*tow=(struct T*)realloc(tow,(sizeof(*tow)+sizeof(struct T*)));
     if(debug) LOG(LL_INFO,("sizeof(*tow) is now=%i \n",sizeof(*tow)));
   tow[countDevs]=(struct T*)malloc(sizeof(struct T));
+  if(debug) LOG(LL_INFO,("pointer 001 \n"));
+  tow[countDevs]->device_address=(uint8_t*)malloc(64);
   if(debug) LOG(LL_INFO,("addToDevField, memory allocated.. tow=%i, *tow=%i, tow[%i]=%i, *tow[%i]=%i sizeof(struct T)= %i memory.", sizeof(tow), sizeof(*tow), countDevs, sizeof(tow[countDevs]), countDevs, sizeof(*tow[countDevs]),sizeof(struct T)));
   tow[countDevs]->device_address=devrom;
   tow[countDevs]->onewire=ow;

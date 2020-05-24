@@ -25,7 +25,8 @@ extern "C"
 #endif /* __cplusplus */
 
 #define DEVICE_FAMILY_DS18B20 0x28
-struct T** tow; //define array of sensors
+#define max_num_of_sensors 32 //maximal number of sensors on one ow line 32, for more increase number
+struct T* tow[max_num_of_sensors]; //define array of sensors, 
 static uint8_t countDevs=0;
 
 //init - return count of DS18B20 sensors
