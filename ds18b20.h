@@ -1,5 +1,6 @@
 /**
- *
+ * Author: Jiri Liska, Trebon, Czech Republic, liskaj72@gmail.com
+ * 05/2020
  **/
 
 #ifndef DS18B20_H
