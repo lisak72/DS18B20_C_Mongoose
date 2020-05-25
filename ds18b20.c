@@ -119,8 +119,9 @@ float DS18B20_GetTempTNumber(uint8_t num){
 //private funct
 float DS_get_temp(struct T* ts){
 if (!(mgos_onewire_reset(ts->onewire))) return -999; 
+  mgos_onewire_select(ts->onewire,ts->device_address);
   mgos_onewire_write(ts->onewire,CMD_CONVERT_T);
-  mgos_msleep(100);
+  mgos_msleep(700);
 mgos_onewire_reset(ts->onewire);
 mgos_msleep(1000); //this is important wt
 if(debug) LOG(LL_INFO,("DS_get_temp rom addr> %x:%x:%x:%x:%x:%x:%x:%x",ts->device_address[0],ts->device_address[1],ts->device_address[2],ts->device_address[3],ts->device_address[4],ts->device_address[5],ts->device_address[6],ts->device_address[7]));
