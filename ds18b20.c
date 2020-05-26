@@ -54,15 +54,20 @@ void createDevField(){ //primary creation of array of sensors, run only once, ne
 }
 
 //private funct, "constructor" of struct T
-uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow){ //add memory for one sensor to array of sensors, returns last access field item index
+uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow){ //add memory for one sensor to array of sensors, returns last access field item index
   if(debug) LOG(LL_INFO,("addToDevField started.."));
   //*tow=(struct T*)realloc(tow,(sizeof(*tow)+sizeof(struct T*)));
     if(debug) LOG(LL_INFO,("sizeof(*tow) is now=%i \n",sizeof(*tow)));
   tow[countDevs]=(struct T*)malloc(sizeof(struct T));
   if(debug) LOG(LL_INFO,("pointer 001 \n"));
-  tow[countDevs]->device_address=(uint8_t*)malloc(64);
-  if(debug) LOG(LL_INFO,("addToDevField, memory allocated.. tow=%i, *tow=%i, tow[%i]=%i, *tow[%i]=%i sizeof(struct T)= %i memory.", sizeof(tow), sizeof(*tow), countDevs, sizeof(tow[countDevs]), countDevs, sizeof(*tow[countDevs]),sizeof(struct T)));
-  tow[countDevs]->device_address=devrom;
+  tow[countDevs]->device_address=(uint8_t*)malloc(64);//blbe, predavany ukazatel prepise alokovanou pamet, malloc je zbytecny--mallocknote
+  if(debug) LOG(LL_INFO,("addToDevField, memory allocated --note001.. tow=%i, *tow=%i, tow[%i]=%i, *tow[%i]=%i sizeof(struct T)= %i memory.", sizeof(tow), sizeof(*tow), countDevs, sizeof(tow[countDevs]), countDevs, sizeof(*tow[countDevs]),sizeof(struct T)));
+  //tow[countDevs]->device_address=devrom; //blbe, predavany ukazatel prepise alokovanou pamet, malloc je zbytecny nebo strcpy --mallocknote
+      for(int c=0;c<8;c++){
+        tow[countDevs]->device_address[c]=devrom[c];     //devrom cpy
+      }
+  //strcpy(tow[countDevs]->device_address,devrom);
+  if(debug) LOG(LL_INFO,("add T addr --note001:%x, device address addr:%x", (uint32_t) tow[countDevs],(uint32_t) tow[countDevs]->device_address));
   tow[countDevs]->onewire=ow;
   if(tow[countDevs]->device_address[0]==DEVICE_FAMILY_DS18B20) tow[countDevs]->isDs18b20=true;
     else tow[countDevs]->isDs18b20=false;
@@ -118,12 +123,12 @@ float DS18B20_GetTempTNumber(uint8_t num){
 
 //private funct
 float DS_get_temp(struct T* ts){
-if (!(mgos_onewire_reset(ts->onewire))) return -999; 
+if (!(mgos_onewire_reset(ts->onewire))) return -997; 
   mgos_onewire_select(ts->onewire,ts->device_address);
   mgos_onewire_write(ts->onewire,CMD_CONVERT_T);
   mgos_msleep(700);
 mgos_onewire_reset(ts->onewire);
-mgos_msleep(1000); //this is important wt
+mgos_msleep(100); //this is important wt
 if(debug) LOG(LL_INFO,("DS_get_temp rom addr> %x:%x:%x:%x:%x:%x:%x:%x",ts->device_address[0],ts->device_address[1],ts->device_address[2],ts->device_address[3],ts->device_address[4],ts->device_address[5],ts->device_address[6],ts->device_address[7]));
 mgos_onewire_select(ts->onewire,ts->device_address);
 uint8_t data[DATA_SCRATCHPAD_SIZE];
@@ -162,19 +167,15 @@ uint8_t DS18B20_init(struct mgos_onewire *ow){
   mgos_onewire_target_setup(ow,DEVICE_FAMILY_DS18B20);
   if(debug) LOG(LL_INFO,("DS18B20_init entering.."));
   createDevField();
-  uint8_t rom[8];
-  uint8_t* rom_st=(uint8_t*)malloc((sizeof(uint8_t))*8); //primary alocation of rom of sensor
+  uint8_t* rom_st=(uint8_t*)malloc((sizeof(uint8_t))*8); //primary alocation of rom of sensor //tohle malloc asi taky zbytecne --mallocknote
     for(uint8_t j=0; j<8;j++){
         rom_st[j]=0x00;
       }
-  while(mgos_onewire_next(ow,rom,0)){
-    for(uint8_t j=0; j<8;j++){
-        rom_st[j]=rom[j];
-      }
+  while(mgos_onewire_next(ow,rom_st,0)){
     addToDevField(rom_st, ow);
+    if(debug) LOG(LL_INFO,("init read rom addr> %x:%x:%x:%x:%x:%x:%x:%x",rom_st[0],rom_st[1],rom_st[2],rom_st[3],rom_st[4],rom_st[5],rom_st[6],rom_st[7]));
   }
-  if(debug) LOG(LL_INFO,("init read rom addr> %x:%x:%x:%x:%x:%x:%x:%x",rom[0],rom[1],rom[2],rom[3],rom[4],rom[5],rom[6],rom[7]));
-  if(debug) LOG(LL_INFO,("DS18B20_init finished ok!"));
+    if(debug) LOG(LL_INFO,("DS18B20_init finished ok!"));
   return countDevs;
 }
 
