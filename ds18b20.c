@@ -20,7 +20,7 @@ struct T{
 const uint8_t REG_CONF_RESOLUTION_9BIT= 0x00;
 const uint8_t REG_CONF_RESOLUTION_10BIT= 0x20;
 const uint8_t REG_CONF_RESOLUTION_11BIT= 0x40;
-const uint8_t REG_CONF_RESOLUTION_MASK= 0x60; //only bit 5 and 6 are used for conf resolution
+const uint8_t REG_CONF_RESOLUTION_MASK= 0x60; //only byte 5 and 6 are used for conf resolution
 const uint8_t CMD_CONVERT_T= 0x44; //initiate temperature conversion
 const uint8_t CMD_READ_SCRATCHPAD= 0xBE;
 const uint8_t DATA_TEMP_LSB= 0; //lsb byte 0 from scratchpad
@@ -44,14 +44,12 @@ uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow){ //add memory fo
     if(debug) LOG(LL_INFO,("sizeof(*tow) is now=%i \n",sizeof(*tow)));
   tow[countDevs]=(struct T*)malloc(sizeof(struct T));
   if(debug) LOG(LL_INFO,("pointer 001 \n"));
-  tow[countDevs]->device_address=(uint8_t*)malloc(64);//blbe, predavany ukazatel prepise alokovanou pamet, malloc je zbytecny--mallocknote
+  tow[countDevs]->device_address=(uint8_t*)malloc(64);
   if(debug) LOG(LL_INFO,("addToDevField, memory allocated --note001.. tow=%i, *tow=%i, tow[%i]=%i, *tow[%i]=%i sizeof(struct T)= %i memory.", sizeof(tow), sizeof(*tow), countDevs, sizeof(tow[countDevs]), countDevs, sizeof(*tow[countDevs]),sizeof(struct T)));
-  //tow[countDevs]->device_address=devrom; //blbe, predavany ukazatel prepise alokovanou pamet, malloc je zbytecny nebo strcpy --mallocknote
       for(int c=0;c<8;c++){
         tow[countDevs]->device_address[c]=devrom[c];     //devrom cpy
       }
-  //strcpy(tow[countDevs]->device_address,devrom);
-  if(debug) LOG(LL_INFO,("add T addr --note001:%x, device address addr:%x", (uint32_t) tow[countDevs],(uint32_t) tow[countDevs]->device_address));
+    if(debug) LOG(LL_INFO,("add T addr --note001:%x, device address addr:%x", (uint32_t) tow[countDevs],(uint32_t) tow[countDevs]->device_address));
   tow[countDevs]->onewire=ow;
   if(tow[countDevs]->device_address[0]==DEVICE_FAMILY_DS18B20) tow[countDevs]->isDs18b20=true;
     else tow[countDevs]->isDs18b20=false;
@@ -108,7 +106,7 @@ float DS18B20_GetTempTNumber(uint8_t num){
 uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr){ //only 6bytes is device-specific address
   if (countDevs==0) return 0; //no devices or no init
   unsigned int idevaddr[6];
-  for (int i=0; i<6; i++){
+  for (uint8_t i=0; i<6; i++){
     idevaddr[i]=romaddr[i];
   }
   if(debug) LOG(LL_INFO,("given rom addr> %x:%x:%x:%x:%x:%x",idevaddr[0], idevaddr[1], idevaddr[2], idevaddr[3], idevaddr[4], idevaddr[5]));
@@ -154,7 +152,7 @@ raw=(raw <<8);
 raw=(raw | data[DATA_TEMP_LSB]);
 if(debug) LOG(LL_INFO,("DS_get_temp lsb=%x, msb=%x",data[DATA_TEMP_LSB],data[DATA_TEMP_MSB] ));
 if(debug) LOG(LL_INFO,("DS_get_temp crc=%x",data[8]));
-uint8_t cfg= (data[DATA_REG_CONF] & REG_CONF_RESOLUTION_MASK);//only bit 5 and 6 used for conf res
+uint8_t cfg= (data[DATA_REG_CONF] & REG_CONF_RESOLUTION_MASK);//only byte 5 and 6 used for conf res
 if(debug) LOG(LL_INFO,("data[DATA_REG_CONF]=%x", data[DATA_REG_CONF]));
 if(debug) LOG(LL_INFO,("DS_get_temp resolution cfg=%x", cfg));
 if (cfg == REG_CONF_RESOLUTION_9BIT) {
@@ -175,7 +173,6 @@ uint8_t DS18B20_init(struct mgos_onewire *ow){
   mgos_onewire_search_clean(ow);
   mgos_onewire_target_setup(ow,DEVICE_FAMILY_DS18B20);
   if(debug) LOG(LL_INFO,("DS18B20_init entering.."));
-  //createDevField();
   uint8_t* rom_st=(uint8_t*)malloc((sizeof(uint8_t))*8); //primary alocation of rom of sensor //tohle malloc asi taky zbytecne --mallocknote
     for(uint8_t j=0; j<8;j++){
         rom_st[j]=0x00;
