@@ -1,4 +1,6 @@
 /*
+ * Author: Jiri Liska, Trebon, Czech Republic, liskaj72@gmail.com
+ * 05/2020
 */
 
 
@@ -27,31 +29,13 @@ const uint8_t DATA_REG_CONF= 4; //byte 4 of scratchpad is the configuration regi
 const uint8_t DATA_SCRATCHPAD_SIZE= 9; //9 data bytes scratchpad size
 
 
-const bool debug=true;
+const bool debug=0;
 //private funct
 float DS_get_temp(struct T* ts);
-void createDevField();
+//void createDevField();
 uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow);
 char *byteToHexF(uint8_t byteOfAddress);
 
-
-//private funct
-void createDevField(){ //primary creation of array of sensors, run only once, next run will redefine array
-  if(debug) LOG(LL_INFO,("createDevField entering.."));
-  // tow=(struct T**)malloc(sizeof(struct T*));
- /*
-  if(countDevs!=0) {  //if array already exist (redefinition)
-  if(debug) LOG(LL_INFO,("createDevField freeing allocation.."));
-    for(uint8_t i=0;i<countDevs;i++){
-      free(tow[i]);
-      tow[i]=NULL;
-    }
-  }
-  */   
-  if(debug) LOG(LL_INFO,("createDevField after if..\n"));
-  countDevs=0;
-  if(debug) LOG(LL_INFO,("createDevField finished ok., tow=%i, *tow=%i, tow[0]=%i, *tow[0]=%i memory.", sizeof(tow), sizeof(*tow), sizeof(tow[0]), sizeof(*tow[0])));
-}
 
 //private funct, "constructor" of struct T
 uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow){ //add memory for one sensor to array of sensors, returns last access field item index
@@ -107,7 +91,7 @@ uint8_t DS18B20GetCount(){
   return counter;
 }
 
-
+//public f
 float DS18B20_GetTempTNumber(uint8_t num){
   if (countDevs==0 || num>countDevs) return -999;
   float temp=-998;
@@ -120,26 +104,51 @@ float DS18B20_GetTempTNumber(uint8_t num){
   return temp;
 }
 
+// public f
+uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr){ //only 6bytes is device-specific address
+  if (countDevs==0) return 0; //no devices or no init
+  unsigned int idevaddr[6];
+  for (int i=0; i<6; i++){
+    idevaddr[i]=romaddr[i];
+  }
+  if(debug) LOG(LL_INFO,("given rom addr> %x:%x:%x:%x:%x:%x",idevaddr[0], idevaddr[1], idevaddr[2], idevaddr[3], idevaddr[4], idevaddr[5]));
+    uint8_t ret=0;
+  for(int i=0;i<countDevs;i++){
+      if(tow[i]->devaddr[0]!=idevaddr[0]) break;
+      if(tow[i]->devaddr[1]!=idevaddr[1]) break;
+      if(tow[i]->devaddr[2]!=idevaddr[2]) break;
+      if(tow[i]->devaddr[3]!=idevaddr[3]) break;
+      if(tow[i]->devaddr[4]!=idevaddr[4]) break;
+      if(tow[i]->devaddr[5]!=idevaddr[5]) break;
+      else ret=tow[i]->number;
+  }
+  return ret;
+}
 
 //private funct
 float DS_get_temp(struct T* ts){
 if (!(mgos_onewire_reset(ts->onewire))) return -997; 
   mgos_onewire_select(ts->onewire,ts->device_address);
   mgos_onewire_write(ts->onewire,CMD_CONVERT_T);
-  mgos_msleep(700);
+  uint32_t cnvtime=0;
+  while (! (mgos_onewire_read_bit(ts->onewire)))
+  {
+    mgos_msleep(10); //waiting for conversion
+    if(debug) cnvtime+=10;
+  } 
+  if(debug) LOG(LL_INFO,("conversion time %u ms", cnvtime));
 mgos_onewire_reset(ts->onewire);
-mgos_msleep(100); //this is important wt
+mgos_msleep(100); 
 if(debug) LOG(LL_INFO,("DS_get_temp rom addr> %x:%x:%x:%x:%x:%x:%x:%x",ts->device_address[0],ts->device_address[1],ts->device_address[2],ts->device_address[3],ts->device_address[4],ts->device_address[5],ts->device_address[6],ts->device_address[7]));
 mgos_onewire_select(ts->onewire,ts->device_address);
 uint8_t data[DATA_SCRATCHPAD_SIZE];
-mgos_msleep(100);
+mgos_usleep(100);
 mgos_onewire_write(ts->onewire,CMD_READ_SCRATCHPAD);
 mgos_msleep(100);
-for(uint8_t s=0; s<DATA_SCRATCHPAD_SIZE; s++){  //read all scratchpad
+for(uint8_t s=0; s<DATA_SCRATCHPAD_SIZE; s++){  //read complete scratchpad
     data[s]=mgos_onewire_read(ts->onewire);
     if(debug) LOG(LL_INFO,("reading scratchpad data %i data=%x",s,data[s]));
 }
-//uint16_t raw= (data[DATA_TEMP_MSB] <<8 | data[DATA_TEMP_LSB]);
 uint16_t raw= data[DATA_TEMP_MSB];
 raw=(raw <<8);
 raw=(raw | data[DATA_TEMP_LSB]);
@@ -166,7 +175,7 @@ uint8_t DS18B20_init(struct mgos_onewire *ow){
   mgos_onewire_search_clean(ow);
   mgos_onewire_target_setup(ow,DEVICE_FAMILY_DS18B20);
   if(debug) LOG(LL_INFO,("DS18B20_init entering.."));
-  createDevField();
+  //createDevField();
   uint8_t* rom_st=(uint8_t*)malloc((sizeof(uint8_t))*8); //primary alocation of rom of sensor //tohle malloc asi taky zbytecne --mallocknote
     for(uint8_t j=0; j<8;j++){
         rom_st[j]=0x00;
@@ -179,24 +188,6 @@ uint8_t DS18B20_init(struct mgos_onewire *ow){
   return countDevs;
 }
 
-/*
-//function counting number of sensors on one onewire link *ow
-uint8_t DS18B20CountSensors(struct mgos_onewire *ow){
-const uint8_t CMD_READ_SCRATCHPAD= 0xBE;
-// const uint16_t CMD_READ_ROM= 0x33;  //cmd read_rom (rom size 64b), only if one device on a ow bus
-const uint8_t CMD_SEARCH_ROM= 0xf0; //search all onewire bus
-const uint8_t DATA_SCRATCHPAD_SIZE= 9; //9 data bytes scratchpad size
-mgos_onewire_reset(ow);
-mgos_onewire_target_setup(ow, DEVICE_FAMILY_DS18B20);
-uint8_t i=0;
-//device_addresses[0]=malloc(64);
-while (mgos_onewire_next(ow,(p_device_address[][i]),0)){
-i++;
-//device_addresses[i]=malloc(64);
-}
-return i;
-}
-*/
 
 //private function uint8_t to hex 
 char *byteToHexF(uint8_t byteOfAddress){
@@ -210,7 +201,7 @@ char *byteToHexF(uint8_t byteOfAddress){
 }
 
 /*
-char* DS18B20GetDeviceAddress(uint8_t i){
+char* DS18B20GetAllDeviceAddresses(){
   char* addrstring=(char*)malloc(64);
   char *added=(char*)malloc(sizeof(char)*3);
   for(uint8_t j=0;j<8;j++){
@@ -223,20 +214,4 @@ char* DS18B20GetDeviceAddress(uint8_t i){
 }
 */
 
-/*
-//private function read_scratchpad read rom of device and return 64bit (8bit array[9])
-uint8_t* read_scratchpad(struct mgos_onewire *ow, uint8_t sizeOfScratchpad){
-  uint8_t scratchpad_buffer[sizeOfScratchpad];
-}
-*/
 
-/*
-uint8_t* search_rom(struct mgos_onewire *ow){   //search rom f0h 
-    mgos_onewire_write(ow,0xf0);
-    uint8_t *code_part[8];
-    for(uint8_t i=0; i<8; i++){
-    *code_part[i] =  mgos_onewire_read(ow);
-    }
-   return code_part;
-}
-*/

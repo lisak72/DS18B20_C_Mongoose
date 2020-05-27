@@ -26,7 +26,7 @@ extern "C"
 #endif /* __cplusplus */
 
 #define DEVICE_FAMILY_DS18B20 0x28
-#define max_num_of_sensors 32 //maximal number of sensors on one ow line 32, for more increase number
+#define max_num_of_sensors 32 //maximal number of sensors on one ow line 32, for more increase number, max is 255
 struct T* tow[max_num_of_sensors]; //define array of sensors, 
 static uint8_t countDevs=0;
 
@@ -42,15 +42,13 @@ uint8_t DS18B20GetCount();
 //get temperature from device number num
 float DS18B20_GetTempTNumber(uint8_t num);
 
+//return number of device by addr romaddr
+//parameter romaddr example uint8_t address[]={0xdd,0xdd,0xdd,0xdd,0xdd,0xdd};
+uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr); 
 
-//return count of sensors, fill rom[] codes
+//return rom addresses of discovered devices
 // uint8_t DS18B20CountSensors(struct mgos_onewire *ow);
 
-//return address of device number i
-
-
-
-// uint8_t* search_rom(struct mgos_onewire *ow);
 
 
 #ifdef __cplusplus
