@@ -20,7 +20,7 @@ struct T{
 const uint8_t REG_CONF_RESOLUTION_9BIT= 0x00;
 const uint8_t REG_CONF_RESOLUTION_10BIT= 0x20;
 const uint8_t REG_CONF_RESOLUTION_11BIT= 0x40;
-const uint8_t REG_CONF_RESOLUTION_MASK= 0x60; //only byte 5 and 6 are used for conf resolution
+const uint8_t REG_CONF_RESOLUTION_MASK= 0x60; //only bit 5 and 6 are used for conf resolution
 const uint8_t CMD_CONVERT_T= 0x44; //initiate temperature conversion
 const uint8_t CMD_READ_SCRATCHPAD= 0xBE;
 const uint8_t DATA_TEMP_LSB= 0; //lsb byte 0 from scratchpad
@@ -152,7 +152,7 @@ raw=(raw <<8);
 raw=(raw | data[DATA_TEMP_LSB]);
 if(debug) LOG(LL_INFO,("DS_get_temp lsb=%x, msb=%x",data[DATA_TEMP_LSB],data[DATA_TEMP_MSB] ));
 if(debug) LOG(LL_INFO,("DS_get_temp crc=%x",data[8]));
-uint8_t cfg= (data[DATA_REG_CONF] & REG_CONF_RESOLUTION_MASK);//only byte 5 and 6 used for conf res
+uint8_t cfg= (data[DATA_REG_CONF] & REG_CONF_RESOLUTION_MASK);//only bit 5 and 6 used for conf res
 if(debug) LOG(LL_INFO,("data[DATA_REG_CONF]=%x", data[DATA_REG_CONF]));
 if(debug) LOG(LL_INFO,("DS_get_temp resolution cfg=%x", cfg));
 if (cfg == REG_CONF_RESOLUTION_9BIT) {
