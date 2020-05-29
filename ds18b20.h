@@ -46,9 +46,22 @@ float DS18B20_GetTempTNumber(uint8_t num);
 //parameter romaddr example uint8_t address[]={0xdd,0xdd,0xdd,0xdd,0xdd,0xdd};
 uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr); 
 
-//return rom addresses of discovered devices
-// uint8_t DS18B20CountSensors(struct mgos_onewire *ow);
+//return temperature by addr romaddr
+//parameter romaddr example uint8_t address[]={0xdd,0xdd,0xdd,0xdd,0xdd,0xdd};
+float DS18B20_GetTempTByRom(uint8_t *romaddress);
 
+/*
+//list all 6bit addresses of discovered devices
+//return pointer to mallocated array, must be freed, example of use:
+  char** listDev;
+  listDev=DS18B20ListAddresses();
+  for(uint8_t i=0; listDev[i]!= NULL; i++){
+      LOG(LL_INFO, ("Device %d addr: %s", i+1, listDev[i]));
+      free(listDev[i]);
+  }
+  free(listDev);
+*/
+char** DS18B20ListAddresses();
 
 
 #ifdef __cplusplus

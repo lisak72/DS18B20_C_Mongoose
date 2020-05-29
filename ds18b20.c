@@ -12,7 +12,7 @@ struct T{
   uint8_t *device_address;//=rom =is 64bit sensor address
   uint8_t devaddr[6];
   uint8_t crc;
-  char char_address[64]; //address of device in hexa chars
+  char char_address[64]; //address of device in hexa chars //only 6 device-specific bytes
   bool isDs18b20; //is device ds18b20?
   struct mgos_onewire *onewire;
 };
@@ -29,7 +29,7 @@ const uint8_t DATA_REG_CONF= 4; //byte 4 of scratchpad is the configuration regi
 const uint8_t DATA_SCRATCHPAD_SIZE= 9; //9 data bytes scratchpad size
 
 
-const bool debug=0;
+const bool debug=1;
 //private funct
 float DS_get_temp(struct T* ts);
 //void createDevField();
@@ -53,9 +53,9 @@ uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow){ //add memory fo
   tow[countDevs]->onewire=ow;
   if(tow[countDevs]->device_address[0]==DEVICE_FAMILY_DS18B20) tow[countDevs]->isDs18b20=true;
     else tow[countDevs]->isDs18b20=false;
-    char buf[32];
+    char buf[64];
   if(debug) LOG(LL_INFO,("addToDevField buf.."));
-  sprintf(buf,"%x:%x:%x:%x:%x:%x:%x:%x", tow[countDevs]->device_address[0], tow[countDevs]->device_address[1], tow[countDevs]->device_address[2], tow[countDevs]->device_address[3], tow[countDevs]->device_address[4], tow[countDevs]->device_address[5], tow[countDevs]->device_address[6], tow[countDevs]->device_address[7]);//bit1,2,3,4,5,6
+  sprintf(buf,"%x:%x:%x:%x:%x:%x", tow[countDevs]->device_address[1], tow[countDevs]->device_address[2], tow[countDevs]->device_address[3], tow[countDevs]->device_address[4], tow[countDevs]->device_address[5], tow[countDevs]->device_address[6]);//bit1,2,3,4,5,6
     tow[countDevs]->devaddr[0]=tow[countDevs]->device_address[1];
     tow[countDevs]->devaddr[1]=tow[countDevs]->device_address[2];
     tow[countDevs]->devaddr[2]=tow[countDevs]->device_address[3];
@@ -105,22 +105,28 @@ float DS18B20_GetTempTNumber(uint8_t num){
 // public f
 uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr){ //only 6bytes is device-specific address
   if (countDevs==0) return 0; //no devices or no init
-  unsigned int idevaddr[6];
+  uint8_t idevaddr[6];
   for (uint8_t i=0; i<6; i++){
     idevaddr[i]=romaddr[i];
   }
   if(debug) LOG(LL_INFO,("given rom addr> %x:%x:%x:%x:%x:%x",idevaddr[0], idevaddr[1], idevaddr[2], idevaddr[3], idevaddr[4], idevaddr[5]));
     uint8_t ret=0;
   for(int i=0;i<countDevs;i++){
-      if(tow[i]->devaddr[0]!=idevaddr[0]) break;
-      if(tow[i]->devaddr[1]!=idevaddr[1]) break;
-      if(tow[i]->devaddr[2]!=idevaddr[2]) break;
-      if(tow[i]->devaddr[3]!=idevaddr[3]) break;
-      if(tow[i]->devaddr[4]!=idevaddr[4]) break;
-      if(tow[i]->devaddr[5]!=idevaddr[5]) break;
+      if(tow[i]->devaddr[0]!=idevaddr[0]) continue;
+      if(tow[i]->devaddr[1]!=idevaddr[1]) continue;
+      if(tow[i]->devaddr[2]!=idevaddr[2]) continue;
+      if(tow[i]->devaddr[3]!=idevaddr[3]) continue;
+      if(tow[i]->devaddr[4]!=idevaddr[4]) continue;
+      if(tow[i]->devaddr[5]!=idevaddr[5]) continue;
       else ret=tow[i]->number;
+      if(debug) LOG(LL_INFO,("GetNumByRom iteration %i",i));
   }
   return ret;
+}
+
+//public f
+float DS18B20_GetTempTByRom(uint8_t *romaddress){
+  return(DS18B20_GetTempTNumber(DS18B20_GetNumbyRom(romaddress)));
 }
 
 //private funct
@@ -197,18 +203,21 @@ char *byteToHexF(uint8_t byteOfAddress){
   return p_ret;
 }
 
-/*
-char* DS18B20GetAllDeviceAddresses(){
-  char* addrstring=(char*)malloc(64);
-  char *added=(char*)malloc(sizeof(char)*3);
-  for(uint8_t j=0;j<8;j++){
-    added=byteToHexF(device_addresses[i][j]);
-    strcat(addrstring, added);
-    //strcat(addrstring, '\0');
-    j++;
-  }
+//private f
+//return device-specific 6byte-part of rom address of device as char*
+char* DS18B20GetCharDeviceAddress(struct T* devT){
+  char* addrstring=(char*)malloc(64*sizeof(char));
+    strcpy(addrstring, devT->char_address);
   return addrstring;
 }
-*/
 
+//public
+char** DS18B20ListAddresses(){
+  char** addrarr=(char**) malloc ((countDevs+2)*(sizeof(char*)));
+  for(uint8_t i=0; i<countDevs;i++){
+       addrarr[i]= DS18B20GetCharDeviceAddress(tow[i]);
+       addrarr[i+1]=NULL;
+  }
+  return addrarr;
+}
 
