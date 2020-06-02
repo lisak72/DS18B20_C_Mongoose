@@ -29,13 +29,12 @@ const uint8_t DATA_REG_CONF= 4; //byte 4 of scratchpad is the configuration regi
 const uint8_t DATA_SCRATCHPAD_SIZE= 9; //9 data bytes scratchpad size
 
 
-const bool debug=1;
 //private funct
 float DS_get_temp(struct T* ts);
 //void createDevField();
 uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow);
 char *byteToHexF(uint8_t byteOfAddress);
-
+const bool debug=0;
 
 //private funct, "constructor" of struct T
 uint8_t addToDevField(uint8_t *devrom, struct mgos_onewire *ow){ //add memory for one sensor to array of sensors, returns last access field item index
@@ -221,3 +220,6 @@ char** DS18B20ListAddresses(){
   return addrarr;
 }
 
+/*
+todo - prepsat vsechny mallock co pujdou na predavani pole parametrem, ne vracenim hodnoty
+*/

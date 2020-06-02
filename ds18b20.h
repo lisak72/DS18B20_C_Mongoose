@@ -25,6 +25,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+
 #define DEVICE_FAMILY_DS18B20 0x28
 #define max_num_of_sensors 32 //maximal number of sensors on one ow line 32, for more increase number, max is 255
 struct T* tow[max_num_of_sensors]; //define array of sensors, 
