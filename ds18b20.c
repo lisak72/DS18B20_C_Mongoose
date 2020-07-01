@@ -1,6 +1,6 @@
 /*
  * Author: Jiri Liska, Trebon, Czech Republic, liskaj72@gmail.com
- * 05/2020
+ * 07/2020
 */
 
 
@@ -129,6 +129,7 @@ float DS18B20_GetTempTByRom(uint8_t *romaddress){
 }
 
 //private funct
+//20200701 change raw from uint16 to int16
 float DS_get_temp(struct T* ts){
 if (!(mgos_onewire_reset(ts->onewire))) return -997; 
   mgos_onewire_select(ts->onewire,ts->device_address);
@@ -152,7 +153,7 @@ for(uint8_t s=0; s<DATA_SCRATCHPAD_SIZE; s++){  //read complete scratchpad
     data[s]=mgos_onewire_read(ts->onewire);
     if(debug) LOG(LL_INFO,("reading scratchpad data %i data=%x",s,data[s]));
 }
-uint16_t raw= data[DATA_TEMP_MSB];
+int16_t raw= data[DATA_TEMP_MSB];
 raw=(raw <<8);
 raw=(raw | data[DATA_TEMP_LSB]);
 if(debug) LOG(LL_INFO,("DS_get_temp lsb=%x, msb=%x",data[DATA_TEMP_LSB],data[DATA_TEMP_MSB] ));
@@ -210,6 +211,22 @@ char* DS18B20GetCharDeviceAddress(struct T* devT){
   return addrstring;
 }
 
+//private
+//delay, use uint64_t
+void DelayMicroseconds(uint64_t micros){
+  uint64_t actTime;
+  actTime=mgos_uptime_micros();
+  while ((actTime+micros)>mgos_uptime_micros()) {};
+}
+
+//private
+//delay miliseconds, use uint32_t
+void DelayMiliseconds(uint32_t milis){
+  DelayMicroseconds(milis*1000);
+}
+
+
+
 //public
 char** DS18B20ListAddresses(){
   char** addrarr=(char**) malloc ((countDevs+2)*(sizeof(char*)));
@@ -220,6 +237,3 @@ char** DS18B20ListAddresses(){
   return addrarr;
 }
 
-/*
-todo - prepsat vsechny mallock co pujdou na predavani pole parametrem, ne vracenim hodnoty
-*/

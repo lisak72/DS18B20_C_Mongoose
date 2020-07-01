@@ -1,6 +1,6 @@
 /**
  * Author: Jiri Liska, Trebon, Czech Republic, liskaj72@gmail.com
- * 05/2020
+ * 07/2020
  **/
 
 #ifndef DS18B20_H
@@ -17,6 +17,7 @@
 #include "mgos_system.h"
 #include "mgos_config.h"
 #include "mgos_gpio.h"
+#include "mgos_time.h"
 #include "mgos_onewire.h"
 #include <stdint.h>
 
@@ -52,8 +53,8 @@ uint8_t DS18B20_GetNumbyRom(uint8_t *romaddr);
 float DS18B20_GetTempTByRom(uint8_t *romaddress);
 
 /*
-//list all 6bit addresses of discovered devices
-//return pointer to mallocated array, must be freed, example of use:
+list all 6bit addresses of discovered devices
+return pointer to mallocated array, must be freed, example of use:
   char** listDev;
   listDev=DS18B20ListAddresses();
   for(uint8_t i=0; listDev[i]!= NULL; i++){
