@@ -30,7 +30,14 @@ extern "C"
 #define DEVICE_FAMILY_DS18B20 0x28
 #define max_num_of_sensors 32 //maximal number of sensors on one ow line 32, for more increase number, max is 255
 struct T* tow[max_num_of_sensors]; //define array of sensors, 
-static uint8_t countDevs=0;
+static uint8_t countDevs=0;  //global variable number of founded devices
+const static bool debug=0;  //debug mode on/off
+
+//private funct
+float DS_get_temp(struct T* ts);
+uint8_t addToDevField(uint8_t devrom[], struct mgos_onewire *ow);
+char *byteToHexF(uint8_t byteOfAddress);
+
 
 //init - return count of DS18B20 sensors
 uint8_t DS18B20_init(struct mgos_onewire *ow);
